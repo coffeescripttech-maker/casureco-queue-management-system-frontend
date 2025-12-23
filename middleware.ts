@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  console.log('🔒 Middleware: Checking path:', pathname);
+
   // Public routes that don't require authentication
   const publicRoutes = [
     '/display',
@@ -15,24 +17,28 @@ export async function middleware(request: NextRequest) {
   // Check if current path is a public route
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
+  console.log('🔒 Middleware: Is public route?', isPublicRoute);
+
   // Allow public routes without any checks
   if (isPublicRoute) {
+    console.log('🔒 Middleware: Allowing public route');
     return NextResponse.next();
   }
 
   // For protected routes, check authentication
   const token = request.cookies.get('auth_token')?.value;
 
+  console.log('🔒 Middleware: Has token?', !!token);
+
   // If no token and trying to access protected route, redirect to login
   if (!token && !isPublicRoute) {
+    console.log('🔒 Middleware: Redirecting to login');
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // TODO: Add maintenance mode check here if needed
-  // This would require calling your backend API to check settings
-
+  console.log('🔒 Middleware: Allowing authenticated route');
   return NextResponse.next();
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { KioskHeader } from '@/components/kiosk/kiosk-header';
 import { ServiceSelection } from '@/components/kiosk/service-selection';
 import { TicketPrint } from '@/components/kiosk/ticket-print';
@@ -8,12 +9,16 @@ import { Service } from '@/types/queue';
 import apiClient from '@/lib/api/client';
 
 export default function KioskPage() {
+  const router = useRouter();
   const [branchId, setBranchId] = useState<string>('');
   const [services, setServices] = useState<Service[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // Check maintenance mode first
+    checkMaintenanceMode();
+    
     // Get branch ID from URL params or localStorage
     const params = new URLSearchParams(window.location.search);
     const urlBranchId = params.get('branch') || localStorage.getItem('kiosk_branch_id');
@@ -26,6 +31,19 @@ export default function KioskPage() {
       setBranchId('071aa7e0-d588-11f0-93ae-088fc3019fcf');
     }
   }, []);
+
+  async function checkMaintenanceMode() {
+    try {
+      const { data } = await apiClient.get<{ settings: { maintenance_mode?: boolean } }>(
+        '/settings/system'
+      );
+      if (data.settings?.maintenance_mode) {
+        router.push('/maintenance');
+      }
+    } catch (error) {
+      console.error('Error checking maintenance mode:', error);
+    }
+  }
 
   useEffect(() => {
     if (!branchId) return;

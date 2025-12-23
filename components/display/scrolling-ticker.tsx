@@ -19,6 +19,9 @@ interface ScrollingTickerProps {
 
 export function ScrollingTicker({ branchId }: ScrollingTickerProps) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [defaultMessage, setDefaultMessage] = useState<string>(
+    'Welcome to CASURECO II Queue Management System • Please wait for your number to be called • Thank you for your patience'
+  );
 
   useEffect(() => {
     if (!branchId) return;
@@ -39,25 +42,43 @@ export function ScrollingTicker({ branchId }: ScrollingTickerProps) {
       }
     }
 
+    async function fetchSettings() {
+      try {
+        const { data } = await apiClient.get<{ settings: { default_ticker_message?: string } }>(
+          '/settings/system'
+        );
+        if (mounted && data.settings?.default_ticker_message) {
+          setDefaultMessage(data.settings.default_ticker_message);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    }
+
     fetchAnnouncements();
+    fetchSettings();
 
     // Subscribe to Socket.IO events
     socket.emit('join:branch', branchId);
     socket.on('announcement:created', fetchAnnouncements);
     socket.on('announcement:updated', fetchAnnouncements);
+    socket.on('announcement:deleted', fetchAnnouncements);
+    socket.on('settings:updated', fetchSettings);
 
     return () => {
       mounted = false;
       socket.emit('leave:branch', branchId);
       socket.off('announcement:created', fetchAnnouncements);
       socket.off('announcement:updated', fetchAnnouncements);
+      socket.off('announcement:deleted', fetchAnnouncements);
+      socket.off('settings:updated', fetchSettings);
     };
   }, [branchId]);
 
   // Create ticker text
   const tickerText = announcements.length > 0
     ? announcements.map(a => `${a.title}: ${a.message}`).join(' • ')
-    : 'Welcome to CASURECO II Queue Management System • Please wait for your number to be called • Thank you for your patience !!';
+    : defaultMessage;
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-[#0033A0] to-[#1A237E] py-4 shadow-lg">

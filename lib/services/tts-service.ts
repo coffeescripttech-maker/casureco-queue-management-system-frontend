@@ -60,6 +60,7 @@ class TTSService {
   speak(text: string, options: TTSOptions = {}): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.isSupported() || !this.isEnabled || !this.synth) {
+        console.log('🔊 TTS: Skipping (not supported or disabled)');
         resolve();
         return;
       }
@@ -84,12 +85,22 @@ class TTSService {
       };
 
       utterance.onerror = (event) => {
-        console.error('🔊 TTS: Error:', event.error);
-        reject(new Error(`Speech error: ${event.error}`));
+        console.warn('🔊 TTS: Error (browser blocked):', event.error);
+        // Don't reject - just resolve silently
+        // This prevents errors when browser blocks autoplay
+        if (event.error === 'not-allowed') {
+          console.log('🔊 TTS: Browser blocked autoplay. User needs to interact with page first.');
+        }
+        resolve(); // Changed from reject to resolve
       };
 
       console.log('🔊 TTS: Speaking:', text);
-      this.synth.speak(utterance);
+      try {
+        this.synth.speak(utterance);
+      } catch (error) {
+        console.warn('🔊 TTS: Speak failed:', error);
+        resolve(); // Resolve instead of reject
+      }
     });
   }
 

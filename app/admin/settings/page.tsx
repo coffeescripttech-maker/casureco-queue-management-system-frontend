@@ -22,6 +22,7 @@ interface SimpleSettings {
   display_refresh_interval: number;
   show_wait_times: boolean;
   language: string;
+  default_ticker_message: string;  // NEW: Default ticker message
   
   // Business Hours
   monday_open: string;
@@ -62,6 +63,7 @@ const DEFAULT_SETTINGS: SimpleSettings = {
   display_refresh_interval: 5,
   show_wait_times: true,
   language: 'en',
+  default_ticker_message: 'Welcome to CASURECO II Queue Management System • Please wait for your number to be called • Thank you for your patience',
   monday_open: '08:00',
   monday_close: '17:00',
   tuesday_open: '08:00',
@@ -262,6 +264,17 @@ export default function SettingsPage() {
                       <SelectItem value="fil">Filipino</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ticker_message">Default Ticker Message</Label>
+                  <Textarea
+                    id="ticker_message"
+                    value={settings.default_ticker_message}
+                    onChange={(e) => setSettings({ ...settings, default_ticker_message: e.target.value })}
+                    rows={3}
+                    placeholder="Message to display on scrolling ticker when no announcements"
+                  />
+                  <p className="text-xs text-gray-500">Shown on display screen when no active announcements</p>
                 </div>
                 <div className="flex items-center justify-between pt-2">
                   <div className="space-y-0.5">

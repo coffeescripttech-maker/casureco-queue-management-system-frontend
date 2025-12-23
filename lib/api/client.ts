@@ -26,8 +26,16 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
+      
+      // Only redirect to login if we're not on a public page
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        const publicPaths = ['/display', '/kiosk', '/login', '/register', '/maintenance'];
+        const currentPath = window.location.pathname;
+        const isPublicPage = publicPaths.some(path => currentPath.startsWith(path));
+        
+        if (!isPublicPage) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);

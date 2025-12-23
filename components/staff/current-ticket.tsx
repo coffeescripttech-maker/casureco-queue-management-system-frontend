@@ -50,13 +50,26 @@ export function CurrentTicket({ ticket, counter }: CurrentTicketProps) {
 
     setReplayLoading(true);
     try {
-      await ttsService.announceTicket(
-        ticket.ticket_number,
-        counter.name
-      );
-      toast.success('Announcement replayed');
+      console.log('🔊 STAFF: Sending replay request:', {
+        ticket_number: ticket.ticket_number,
+        counter_name: counter.name,
+        branch_id: counter.branch_id
+      });
+      
+      // Emit Socket.IO event to display screens to replay announcement
+      const io = await import('@/lib/socket/client');
+      const socket = io.default();
+      
+      socket.emit('replay:announcement', {
+        ticket_number: ticket.ticket_number,
+        counter_name: counter.name,
+        branch_id: counter.branch_id
+      });
+      
+      console.log('🔊 STAFF: Replay request emitted');
+      toast.success('Announcement sent to display screens');
     } catch (error) {
-      console.error('Error replaying announcement:', error);
+      console.error('🔊 STAFF: Error replaying announcement:', error);
       toast.error('Failed to replay announcement');
     } finally {
       setReplayLoading(false);
